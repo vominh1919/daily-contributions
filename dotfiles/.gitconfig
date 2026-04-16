@@ -1,0 +1,10 @@
+[user]
+    name = vominh1919
+    email = vominh1919@gmail.com
+[core]
+    editor = vim
+    autocrlf = input
+[pull]
+    rebase = true
+[init]
+    defaultBranch = main

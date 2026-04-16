@@ -1,0 +1,53 @@
+name: Daily Contribution
+
+on:
+  schedule:
+    - cron: '0 7 * * *'  # 7:00 UTC = 14:00 VN
+  workflow_dispatch:
+
+jobs:
+  daily-commit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Generate daily log
+        run: |
+          DATE=$(date -u +"%Y-%m-%d")
+          WEEK=$(date -u +"%Y-W%V")
+          DAY_OF_YEAR=$(date -u +"%j")
+          
+          mkdir -p logs
+          cat > logs/$DATE.md << EOF
+          # Daily Log - $DATE
+          
+          - Week: $WEEK
+          - Day of year: $DAY_OF_YEAR
+          - Generated: $(date -u +"%H:%M:%S") UTC
+          
+          ## Notes
+          Auto-generated daily contribution.
+          EOF
+          
+          # Update stats
+          TOTAL_DAYS=$(ls logs/*.md 2>/dev/null | wc -l)
+          echo "Total days tracked: $TOTAL_DAYS"
+          
+      - name: Update README
+        run: |
+          DATE=$(date -u +"%Y-%m-%d")
+          if ! grep -q "$DATE" README.md; then
+            echo "| $DATE | Auto-log | Daily contribution |" >> README.md
+          fi
+          
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "chore: daily update ${{ github.event.schedule }}"
+          git push
